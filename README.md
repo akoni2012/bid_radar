@@ -2,8 +2,6 @@
 
 > An autonomous agent that monitors the open web for fresh **AI / data / cloud / analytics / digital-transformation** tenders, turns them into a **ranked opportunity brief grounded in real sources**, publishes a cited report to [`cited.md`](cited.md), monitors for changes over time, and **monetizes premium lead packs behind x402 agent payment rails**.
 
-Built for the hackathon challenge: _"Ship an autonomous agent that does real work on the open web. Publish, monitor, orchestrate, transact — grounded in real sources."_
-
 ---
 
 ## Table of contents
