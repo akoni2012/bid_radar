@@ -1,0 +1,10 @@
+tavily-python>=0.5.0
+prometheux-chain>=0.2.14
+clickhouse-connect>=0.7.0
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+x402[fastapi,evm]>=1.0.0
+requests>=2.31.0
+httpx>=0.27.0
+python-dotenv>=1.0.0
+pydantic>=2.6.0

@@ -1,0 +1,73 @@
+% ===========================================================================
+% Tender commercial-fit scoring  (Prometheux / Vadalog)
+% ---------------------------------------------------------------------------
+% Input facts (emitted per run by src/reason.py):
+%   tender_sector(Id, Sector)        Sector in {ai, analytics, data, cloud,
+%                                     digital_transformation, other}
+%   tender_value_band(Id, Band)      Band in {mega, large, mid, small, unknown}
+%   tender_days(Id, Days)            integer days until submission deadline
+%   tender_recency(Id, AgeDays)      integer days since the notice was published
+%   tender_signals(Id, Count)        count of matched opportunity keywords
+%
+% Output:
+%   opportunity(Id, FitScore)        FitScore in [0, 100]
+%   (evidence-completeness confidence is computed alongside in src/reason.py)
+%
+% Weights are fixed and sum to a maximum FitScore of 100. The same weights are
+% mirrored exactly in src/reason.py so scoring is identical whether reasoning
+% runs on the Prometheux engine or the local fallback.
+% ===========================================================================
+
+@input("tender_sector").
+@input("tender_value_band").
+@input("tender_days").
+@input("tender_recency").
+@input("tender_signals").
+@output("opportunity").
+
+% --- Sector weight (max 30) ---
+sector_w(Id, 30) :- tender_sector(Id, "ai").
+sector_w(Id, 25) :- tender_sector(Id, "analytics").
+sector_w(Id, 22) :- tender_sector(Id, "data").
+sector_w(Id, 20) :- tender_sector(Id, "cloud").
+sector_w(Id, 18) :- tender_sector(Id, "digital_transformation").
+sector_w(Id, 5)  :- tender_sector(Id, "other").
+
+% --- Value-band weight (max 30) ---
+value_w(Id, 30) :- tender_value_band(Id, "mega").
+value_w(Id, 24) :- tender_value_band(Id, "large").
+value_w(Id, 16) :- tender_value_band(Id, "mid").
+value_w(Id, 8)  :- tender_value_band(Id, "small").
+value_w(Id, 4)  :- tender_value_band(Id, "unknown").
+
+% --- Deadline-window weight (max 20): reward an actionable, not-too-tight window ---
+% Note: an unknown deadline is emitted as the sentinel D = -1 (see src/reason.py),
+% so the D < 0 rule below also covers the "unknown / already-closed" neutral case.
+deadline_w(Id, 20) :- tender_days(Id, D), D >= 14, D <= 90.
+deadline_w(Id, 14) :- tender_days(Id, D), D >= 91, D <= 180.
+deadline_w(Id, 10) :- tender_days(Id, D), D >= 7,  D <= 13.
+deadline_w(Id, 8)  :- tender_days(Id, D), D >= 181.
+deadline_w(Id, 4)  :- tender_days(Id, D), D >= 0,  D <= 6.
+deadline_w(Id, 6)  :- tender_days(Id, D), D < 0.
+
+% --- Recency weight (max 12): fresher notices score higher ---
+recency_w(Id, 12) :- tender_recency(Id, A), A >= 0, A <= 7.
+recency_w(Id, 8)  :- tender_recency(Id, A), A >= 8, A <= 30.
+recency_w(Id, 4)  :- tender_recency(Id, A), A >= 31, A <= 90.
+recency_w(Id, 2)  :- tender_recency(Id, A), A >= 91.
+
+% --- Signal weight (max 8): more matched keywords = stronger signal ---
+signal_w(Id, W) :- tender_signals(Id, C), C >= 4, W = 8.
+signal_w(Id, W) :- tender_signals(Id, C), C = 3, W = 6.
+signal_w(Id, W) :- tender_signals(Id, C), C = 2, W = 4.
+signal_w(Id, W) :- tender_signals(Id, C), C = 1, W = 2.
+signal_w(Id, W) :- tender_signals(Id, C), C = 0, W = 0.
+
+% --- Final fit score = sum of all weighted signals ---
+opportunity(Id, Score) :-
+    sector_w(Id, SW),
+    value_w(Id, VW),
+    deadline_w(Id, DW),
+    recency_w(Id, RW),
+    signal_w(Id, GW),
+    Score = SW + VW + DW + RW + GW.

@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+.DS_Store
+*.egg-info/
+
+# Generated runtime artifacts (cited.md at repo root is the published artifact and IS tracked)
+data/state.json
+data/leadpack.json
+data/purchased_leadpack.json
+data/*.log
+data/runs/

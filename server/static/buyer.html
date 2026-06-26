@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Buyer Console · Tender Opportunity Agent</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    :root {
+      --bg: #f5f6fb;
+      --panel: #ffffff;
+      --ink: #1a1c2b;
+      --muted: #6b7088;
+      --line: #e6e8f0;
+      --brand: #4f46e5;
+      --brand-2: #7c6cf0;
+      --green: #16a34a;
+      --amber: #d97706;
+      --red: #dc2626;
+      --gray: #94a3b8;
+      --shadow: 0 1px 3px rgba(16,18,40,.06), 0 8px 24px rgba(16,18,40,.06);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.5;
+    }
+    a { color: var(--brand); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+    header {
+      background: linear-gradient(120deg, #4f46e5 0%, #7c6cf0 60%, #9b8cf7 100%);
+      color: #fff; padding: 26px 24px 64px;
+    }
+    .bar { max-width: 1080px; margin: 0 auto; display: flex; align-items: center; gap: 16px; }
+    .logo { width: 40px; height: 40px; border-radius: 11px; background: rgba(255,255,255,.18);
+      display: grid; place-items: center; font-size: 20px; }
+    .title h1 { margin: 0; font-size: 20px; letter-spacing: -.2px; }
+    .title p { margin: 2px 0 0; font-size: 13px; opacity: .85; }
+    .bar .spacer { flex: 1; }
+    .hlink { color:#fff; font-size:13px; padding:7px 13px; border-radius:9px;
+      background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.22); }
+    .hlink:hover { background:rgba(255,255,255,.26); text-decoration:none; }
+    .pills { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+    .pill { font-size: 12px; padding: 5px 11px; border-radius: 999px;
+      background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.22); white-space: nowrap; }
+    .pill b { font-weight: 600; }
+    .bar-wrap { max-width: 1080px; margin: 0 auto; }
+
+    main { max-width: 1080px; margin: -46px auto 64px; padding: 0 24px; }
+
+    .step {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+      box-shadow: var(--shadow); margin-bottom: 18px; overflow: hidden;
+    }
+    .step.locked { opacity: .55; }
+    .step-head { display: flex; align-items: center; gap: 13px; padding: 16px 20px; }
+    .step-num { width: 28px; height: 28px; flex: none; border-radius: 50%;
+      background: #eef0ff; color: var(--brand); font-weight: 700; font-size: 14px;
+      display: grid; place-items: center; }
+    .step.done .step-num { background: var(--green); color: #fff; }
+    .step-head h2 { margin: 0; font-size: 15.5px; }
+    .step-head .sub { margin: 1px 0 0; font-size: 12.5px; color: var(--muted); }
+    .step-body { padding: 4px 20px 20px; }
+
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .grow { flex: 1; min-width: 220px; }
+
+    .btn {
+      border: none; cursor: pointer; font-size: 14px; font-weight: 600;
+      padding: 10px 16px; border-radius: 10px; transition: transform .05s ease, box-shadow .2s ease, background .2s;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary { background: var(--brand); color: #fff; box-shadow: var(--shadow); }
+    .btn-primary:hover { background: #4338ca; }
+    .btn-ghost { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+    .btn-ghost:hover { border-color: #cdd1e0; }
+    .btn-lg { font-size: 15px; padding: 13px 22px; }
+    .btn[disabled] { opacity: .55; cursor: not-allowed; }
+
+    input.txt {
+      font-size: 13.5px; padding: 10px 12px; border: 1px solid var(--line);
+      border-radius: 10px; width: 100%; background: #fff; color: var(--ink);
+    }
+    input.txt:focus { outline: none; border-color: var(--brand-2); }
+    label.lbl { font-size: 12.5px; color: var(--muted); display: block; margin: 0 0 5px; font-weight: 600; }
+
+    .kv { display: grid; grid-template-columns: 130px 1fr; gap: 6px 14px; font-size: 13px; margin: 4px 0; }
+    .kv dt { color: var(--muted); }
+    .kv dd { margin: 0; }
+    .copy { cursor: pointer; font-size: 11px; color: var(--brand); margin-left: 6px; user-select: none; }
+    .copy:hover { text-decoration: underline; }
+    .addr { word-break: break-all; }
+
+    .banner { padding: 12px 14px; border-radius: 10px; font-size: 13px; margin: 12px 0; }
+    .banner.ok { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+    .banner.warn { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+    .banner.err { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+    .banner.info { background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe; }
+
+    .terms { background: #f8f9fd; border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+
+    /* payment stepper */
+    .flow { display: flex; flex-direction: column; gap: 0; margin: 6px 0 4px; }
+    .fstep { display: flex; gap: 12px; align-items: flex-start; padding: 4px 0; position: relative; }
+    .fstep:not(:last-child)::after {
+      content: ""; position: absolute; left: 12px; top: 26px; bottom: -6px; width: 2px; background: var(--line);
+    }
+    .fstep.active:not(:last-child)::after,
+    .fstep.done:not(:last-child)::after { background: var(--brand-2); }
+    .dot { width: 24px; height: 24px; flex: none; border-radius: 50%; border: 2px solid var(--line);
+      background: #fff; display: grid; place-items: center; font-size: 12px; color: var(--muted); z-index: 1; }
+    .fstep.active .dot { border-color: var(--brand); color: var(--brand); }
+    .fstep.done .dot { border-color: var(--green); background: var(--green); color: #fff; }
+    .fstep.err .dot { border-color: var(--red); background: var(--red); color: #fff; }
+    .ftext { font-size: 13px; padding-top: 2px; }
+    .ftext .t { font-weight: 600; }
+    .ftext .d { color: var(--muted); font-size: 12px; }
+    .fstep.pending .ftext { color: var(--muted); }
+
+    /* opportunities */
+    .watch { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+    .chip { font-size: 12px; padding: 5px 10px; border-radius: 8px; background: #f4f5fb; border: 1px solid var(--line); }
+    .chip b { color: var(--ink); }
+    .opp { border: 1px solid var(--line); border-radius: 13px; padding: 14px 16px; margin-bottom: 12px; }
+    .opp:hover { border-color: #cdd1e0; }
+    .opp-top { display: flex; align-items: flex-start; gap: 12px; }
+    .rank { width: 26px; height: 26px; flex: none; border-radius: 8px; background: #eef0ff; color: var(--brand);
+      font-weight: 700; font-size: 13px; display: grid; place-items: center; }
+    .opp h4 { margin: 0; font-size: 14.5px; }
+    .opp .meta { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+    .badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px; margin-left: 6px; vertical-align: middle; }
+    .badge.NEW { background: #ecfdf5; color: #047857; }
+    .badge.UPDATED { background: #eff6ff; color: #1d4ed8; }
+    .fit { margin: 10px 0 6px; display: flex; align-items: center; gap: 10px; }
+    .fit .track { flex: 1; height: 7px; border-radius: 999px; background: #eef0f6; overflow: hidden; }
+    .fit .fill { height: 100%; border-radius: 999px; }
+    .fit .num { font-size: 12.5px; font-weight: 700; width: 58px; text-align: right; }
+    .opp .why { font-size: 12.5px; color: #41455c; margin: 6px 0; }
+    .opp .ev { font-size: 12px; color: var(--muted); background: #f8f9fd; padding: 8px 10px; border-radius: 8px; }
+    .opp .src { font-size: 12px; margin-top: 8px; }
+
+    .md { font-size: 13.5px; color: #2a2d40; max-height: 360px; overflow: auto; border: 1px solid var(--line);
+      border-radius: 12px; padding: 14px 16px; background: #fff; }
+    .md h1 { font-size: 18px; margin: 0 0 6px; }
+    .md h2 { font-size: 14px; margin: 18px 0 6px; padding-top: 10px; border-top: 1px solid var(--line); }
+    .md table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 8px 0; }
+    .md th, .md td { border: 1px solid var(--line); padding: 5px 7px; text-align: left; vertical-align: top; }
+    .md th { background: #f8f9fd; }
+    .md blockquote { margin: 0 0 10px; padding: 9px 12px; background: #f8f9fd; border-left: 3px solid var(--brand);
+      border-radius: 6px; color: var(--muted); }
+
+    details { margin-top: 12px; }
+    summary { cursor: pointer; font-size: 13px; color: var(--brand); font-weight: 600; }
+    pre.json { background: #0f1222; color: #d7dcff; border-radius: 12px; padding: 14px 16px; overflow: auto;
+      font-size: 12px; max-height: 380px; margin: 10px 0 0; }
+
+    .spinner { width: 16px; height: 16px; border: 2.5px solid rgba(255,255,255,.4);
+      border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
+    .btn-ghost .spinner { border-color: rgba(0,0,0,.15); border-top-color: var(--brand); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .muted { color: var(--muted); font-size: 13px; }
+    .hide { display: none !important; }
+    footer { text-align: center; color: var(--muted); font-size: 12px; padding: 8px 24px 40px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <div class="logo">🛒</div>
+      <div class="title">
+        <h1>Buyer Console</h1>
+        <p>Test the agent-payment flow — fund a wallet, inspect terms, pay x402, get the lead pack</p>
+      </div>
+      <div class="spacer"></div>
+      <a class="hlink" href="/">← Seller view</a>
+    </div>
+    <div class="bar-wrap">
+      <div class="pills" id="pills"><span class="pill">loading…</span></div>
+    </div>
+  </header>
+
+  <main>
+    <!-- STEP 1: WALLET -->
+    <section class="step" id="step1">
+      <div class="step-head">
+        <div class="step-num">1</div>
+        <div>
+          <h2>Buyer wallet</h2>
+          <div class="sub" id="step1sub">The wallet your agent uses to sign the USDC payment.</div>
+        </div>
+      </div>
+      <div class="step-body">
+        <div id="walletDemo" class="banner info hide">
+          Demo mode is on — <b>no wallet or payment is required</b>. You can skip straight to step 3.
+          To exercise a real payment, restart the server with <code>X402_RECEIVING_ADDRESS</code> set.
+        </div>
+
+        <div id="walletLive">
+          <div class="row" style="margin-bottom:14px">
+            <button class="btn btn-ghost" id="genBtn">✨ Generate test wallet</button>
+            <span class="muted">or paste an existing funded key below</span>
+          </div>
+
+          <label class="lbl" for="pk">Buyer private key (Base Sepolia testnet)</label>
+          <div class="row">
+            <input class="txt grow mono" id="pk" type="password" placeholder="0x… (kept in your browser; sent only to this local server to sign)" />
+            <button class="btn btn-ghost" id="revealBtn" title="Show / hide">👁</button>
+            <button class="btn btn-ghost" id="balBtn">Check balance</button>
+          </div>
+
+          <div id="walletInfo" class="hide" style="margin-top:14px">
+            <div class="terms">
+              <dl class="kv">
+                <dt>Address</dt>
+                <dd class="addr mono" id="wAddr">—<span class="copy" data-copy="wAddr">copy</span></dd>
+                <dt>ETH (gas)</dt><dd id="wEth">—</dd>
+                <dt>USDC</dt><dd id="wUsdc">—</dd>
+              </dl>
+              <div id="balBanner"></div>
+            </div>
+          </div>
+
+          <div id="genInfo" class="hide" style="margin-top:14px">
+            <div class="banner warn">
+              <b>New test wallet created.</b> Fund it with test ETH + USDC, then it's ready to pay.
+              <div style="margin-top:8px">
+                <a id="faucetLink" href="#" target="_blank" rel="noopener">Open Base Sepolia faucet ↗</a>
+                &nbsp;·&nbsp;
+                <a id="explorerLink" href="#" target="_blank" rel="noopener" class="hide">View on explorer ↗</a>
+              </div>
+              <div class="muted" style="margin-top:8px">
+                Private key (save it — shown once): <code class="mono" id="genKey"></code>
+                <span class="copy" data-copy="genKey">copy</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 2: OFFER -->
+    <section class="step" id="step2">
+      <div class="step-head">
+        <div class="step-num">2</div>
+        <div>
+          <h2>Review the offer</h2>
+          <div class="sub">What you're buying, and exactly what the paywall will charge.</div>
+        </div>
+      </div>
+      <div class="step-body">
+        <div class="row" style="align-items:flex-start; gap:18px">
+          <div class="grow">
+            <label class="lbl">Payment terms (x402)</label>
+            <div class="terms" id="termsBox"><span class="muted">Loading terms…</span></div>
+          </div>
+          <div class="grow">
+            <label class="lbl">Free brief preview <span class="muted">(the teaser before you pay)</span></label>
+            <div class="md" id="brief"><p class="muted">Loading brief…</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 3: PAY -->
+    <section class="step" id="step3">
+      <div class="step-head">
+        <div class="step-num">3</div>
+        <div>
+          <h2>Pay &amp; unlock</h2>
+          <div class="sub" id="step3sub">Run the <code>402 → sign → retry → settle</code> loop and receive the pack.</div>
+        </div>
+      </div>
+      <div class="step-body">
+        <button class="btn btn-primary btn-lg" id="buyBtn">🔓 Pay &amp; unlock lead pack</button>
+        <span class="muted" id="buyHint" style="margin-left:12px"></span>
+
+        <div class="flow hide" id="flow">
+          <div class="fstep pending" data-step="request">
+            <div class="dot">1</div>
+            <div class="ftext"><div class="t">Request <code>/leadpack</code></div><div class="d">Buyer agent asks for the premium resource.</div></div>
+          </div>
+          <div class="fstep pending" data-step="challenge">
+            <div class="dot">2</div>
+            <div class="ftext"><div class="t">HTTP 402 Payment Required</div><div class="d">Server responds with x402 payment terms.</div></div>
+          </div>
+          <div class="fstep pending" data-step="sign">
+            <div class="dot">3</div>
+            <div class="ftext"><div class="t">Sign USDC authorization (EIP-3009)</div><div class="d">Wallet signs an off-chain transfer authorization.</div></div>
+          </div>
+          <div class="fstep pending" data-step="retry">
+            <div class="dot">4</div>
+            <div class="ftext"><div class="t">Retry with <code>X-PAYMENT</code></div><div class="d">Signed payload is attached and the request is replayed.</div></div>
+          </div>
+          <div class="fstep pending" data-step="settle">
+            <div class="dot">5</div>
+            <div class="ftext"><div class="t">Facilitator settles</div><div class="d">Payment is verified &amp; settled on-chain.</div></div>
+          </div>
+          <div class="fstep pending" data-step="deliver">
+            <div class="dot">6</div>
+            <div class="ftext"><div class="t">Lead pack delivered</div><div class="d">Server returns the full enriched pack.</div></div>
+          </div>
+        </div>
+
+        <div id="payResult"></div>
+      </div>
+    </section>
+
+    <!-- STEP 4: PACK -->
+    <section class="step locked" id="step4">
+      <div class="step-head">
+        <div class="step-num">4</div>
+        <div>
+          <h2>Your lead pack</h2>
+          <div class="sub">Full ranked opportunities, evidence, rationale &amp; watchlist.</div>
+        </div>
+      </div>
+      <div class="step-body" id="packBody">
+        <p class="muted">Unlock the pack in step 3 to see your purchased opportunities here.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Tavily · Prometheux · Senso.ai · ClickHouse · x402 / CDP &nbsp;—&nbsp; agent-native payments on the open web
+  </footer>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    let INFO = {}, TERMS = {}, LAST_PACK = null;
+
+    const short = (a) => a ? a.slice(0,6) + "…" + a.slice(-4) : "";
+    const scoreColor = (s) => s >= 80 ? "var(--green)" : s >= 60 ? "var(--amber)" : "var(--gray)";
+
+    document.addEventListener("click", (e) => {
+      const t = e.target.closest(".copy");
+      if (!t) return;
+      const src = $(t.dataset.copy);
+      const val = src ? (src.dataset.full || src.textContent.replace("copy","").trim()) : "";
+      if (val) { navigator.clipboard.writeText(val); t.textContent = "copied"; setTimeout(()=>t.textContent="copy", 1200); }
+    });
+
+    async function loadInfo() {
+      try { INFO = await (await fetch("/api/info")).json(); } catch { INFO = {}; }
+      const gated = INFO.monetization_gated;
+      $("pills").innerHTML = [
+        `<span class="pill"><b>Status</b> ${gated ? "Paywall ON" : "Demo (ungated)"}</span>`,
+        `<span class="pill"><b>Price</b> ${INFO.price || "—"}</span>`,
+        `<span class="pill"><b>Network</b> ${INFO.network_label || INFO.network || "—"}</span>`,
+        gated ? `<span class="pill"><b>Pay to</b> ${short(INFO.receiving_address)}</span>` : ``,
+      ].join("");
+
+      if (gated) {
+        $("walletDemo").classList.add("hide");
+        $("walletLive").classList.remove("hide");
+        $("step1sub").textContent = "Paste or generate a funded Base Sepolia wallet to sign the payment.";
+        $("buyHint").textContent = INFO.buyer_wallet_configured
+          ? "A server BUYER_PRIVATE_KEY is set; leave the field blank to use it, or paste your own."
+          : "Provide a funded wallet in step 1 first.";
+      } else {
+        $("walletDemo").classList.remove("hide");
+        $("walletLive").classList.add("hide");
+        $("step1sub").textContent = "Demo mode — no wallet needed.";
+        $("buyHint").textContent = "Demo mode: served instantly, no payment required.";
+      }
+    }
+
+    async function loadTerms() {
+      try { TERMS = await (await fetch("/api/payment-terms")).json(); } catch { TERMS = {}; }
+      const box = $("termsBox");
+      if (!TERMS.gated) {
+        box.innerHTML = `<div class="banner info" style="margin:0">🧪 Demo mode — <b>$0.00 due</b>. The pack is served without payment so you can test the flow end-to-end.</div>`;
+        return;
+      }
+      box.innerHTML = `<dl class="kv">
+        <dt>Resource</dt><dd class="mono">${TERMS.resource}</dd>
+        <dt>Price</dt><dd><b>${TERMS.price}</b> <span class="muted">(${TERMS.amount_atomic} atomic)</span></dd>
+        <dt>Asset</dt><dd>${TERMS.asset} <span class="muted mono">${short(TERMS.asset_address)}</span></dd>
+        <dt>Network</dt><dd>${TERMS.network_label} <span class="muted mono">${TERMS.network}</span></dd>
+        <dt>Scheme</dt><dd class="mono">${TERMS.scheme}</dd>
+        <dt>Pay to</dt><dd class="addr mono" id="payTo" data-full="${TERMS.pay_to}">${TERMS.pay_to}<span class="copy" data-copy="payTo">copy</span></dd>
+        <dt>Facilitator</dt><dd class="mono" style="word-break:break-all">${TERMS.facilitator}</dd>
+      </dl>`;
+    }
+
+    async function loadBrief() {
+      try {
+        const res = await fetch("/cited.md");
+        if (!res.ok) throw new Error();
+        $("brief").innerHTML = marked.parse(await res.text());
+      } catch {
+        $("brief").innerHTML = '<p class="muted">No brief yet — run a refresh from the seller view.</p>';
+      }
+    }
+
+    // ---- Step 1: wallet ----
+    async function genWallet() {
+      const btn = $("genBtn"); btn.disabled = true; const prev = btn.innerHTML;
+      btn.innerHTML = '<span class="spinner"></span> Creating…';
+      try {
+        const w = await (await fetch("/api/wallet/new", { method: "POST" })).json();
+        $("pk").value = w.private_key;
+        $("pk").type = "password";
+        $("genKey").textContent = w.private_key; $("genKey").dataset.full = w.private_key;
+        $("faucetLink").href = w.faucet;
+        if (w.explorer) { const el = $("explorerLink"); el.href = w.explorer + "/address/" + w.address; el.classList.remove("hide"); }
+        $("genInfo").classList.remove("hide");
+        showBalance({ address: w.address, eth: 0, usdc: 0, funded: false, explorer: w.explorer ? w.explorer + "/address/" + w.address : "" });
+      } catch (e) {
+        $("genInfo").classList.remove("hide");
+        $("genInfo").innerHTML = `<div class="banner err">Could not create wallet: ${e.message}</div>`;
+      } finally { btn.disabled = false; btn.innerHTML = prev; }
+    }
+
+    function showBalance(b) {
+      $("walletInfo").classList.remove("hide");
+      const addrEl = $("wAddr"); addrEl.dataset.full = b.address;
+      addrEl.innerHTML = `${b.address}<span class="copy" data-copy="wAddr">copy</span>`;
+      $("wEth").textContent = b.eth == null ? "—" : b.eth + " ETH";
+      $("wUsdc").textContent = b.usdc == null ? "—" : b.usdc + " USDC";
+      const bn = $("balBanner");
+      if (b.funded) bn.innerHTML = `<div class="banner ok" style="margin:10px 0 0">✅ Funded — ready to pay.${b.explorer ? ` <a href="${b.explorer}" target="_blank" rel="noopener">explorer ↗</a>` : ""}</div>`;
+      else bn.innerHTML = `<div class="banner warn" style="margin:10px 0 0">Not funded yet (needs ETH for gas + USDC). Use the faucet, then re-check.${b.explorer ? ` <a href="${b.explorer}" target="_blank" rel="noopener">explorer ↗</a>` : ""}</div>`;
+    }
+
+    async function checkBalance() {
+      const key = $("pk").value.trim();
+      if (!key) { alert("Paste or generate a private key first."); return; }
+      const btn = $("balBtn"); btn.disabled = true; const prev = btn.innerHTML;
+      btn.innerHTML = '<span class="spinner"></span> Checking…';
+      try {
+        // Derive address by asking the server for a wallet? No — we only have the key.
+        // The balance endpoint needs an address; derive client-side is non-trivial,
+        // so we ask the user-supplied address via a lightweight derive on the server's buy path.
+        // Simplest robust path: use the generated address if present, else prompt.
+        let addr = $("wAddr").dataset.full;
+        if (!addr) { addr = prompt("Enter the wallet address (0x…) to check balance:") || ""; }
+        if (!addr) return;
+        const b = await (await fetch("/api/wallet/balance?address=" + encodeURIComponent(addr))).json();
+        if (b.error) { $("balBanner").innerHTML = `<div class="banner err" style="margin:10px 0 0">${b.error}</div>`; $("walletInfo").classList.remove("hide"); }
+        else showBalance(b);
+      } finally { btn.disabled = false; btn.innerHTML = prev; }
+    }
+
+    // ---- Step 3: pay ----
+    function setFlow(step, state) {
+      const el = document.querySelector(`.fstep[data-step="${step}"]`);
+      if (!el) return;
+      el.classList.remove("pending","active","done","err");
+      el.classList.add(state);
+    }
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+    async function animateUpTo(steps) {
+      $("flow").classList.remove("hide");
+      for (const s of steps) { setFlow(s, "active"); await sleep(420); setFlow(s, "done"); }
+    }
+
+    async function buy() {
+      const btn = $("buyBtn"); btn.disabled = true; const prev = btn.innerHTML;
+      btn.innerHTML = '<span class="spinner"></span> Processing…';
+      $("payResult").innerHTML = "";
+      ["request","challenge","sign","retry","settle","deliver"].forEach(s => setFlow(s, "pending"));
+      $("flow").classList.remove("hide");
+
+      const gated = INFO.monetization_gated;
+      const key = $("pk").value.trim();
+      if (gated && !key && !INFO.buyer_wallet_configured) {
+        $("payResult").innerHTML = `<div class="banner err">Add a funded wallet in step 1 before paying.</div>`;
+        btn.disabled = false; btn.innerHTML = prev; return;
+      }
+
+      try {
+        // Animate the conceptual flow while the request is in flight.
+        const pre = gated ? ["request","challenge","sign","retry"] : ["request","deliver"];
+        const animation = animateUpTo(pre);
+        const reqBody = (gated && key) ? JSON.stringify({ private_key: key }) : "{}";
+        const res = await fetch("/api/buy", {
+          method: "POST", headers: { "Content-Type": "application/json" }, body: reqBody,
+        });
+        const payload = await res.json();
+        await animation;
+
+        if (!res.ok || payload.paid === false && payload.error) {
+          if (gated) { setFlow("settle", "err"); }
+          $("payResult").innerHTML = `<div class="banner err">⚠️ ${payload.error || "Purchase failed."}</div>`;
+          return;
+        }
+
+        if (gated) { setFlow("settle", "done"); }
+        setFlow("deliver", "done");
+
+        if (payload.paid) {
+          $("payResult").innerHTML = `<div class="banner ok">✅ ${payload.message} ${payload.settled ? "Settlement confirmed." : ""} Wallet ${short(payload.wallet)}</div>`;
+        } else {
+          $("payResult").innerHTML = `<div class="banner warn">🧪 ${payload.message || "Demo mode — unlocked without payment."}</div>`;
+        }
+        renderPack(payload);
+      } catch (e) {
+        setFlow("retry", "err");
+        $("payResult").innerHTML = `<div class="banner err">⚠️ Network error: ${e.message}</div>`;
+      } finally {
+        btn.disabled = false; btn.innerHTML = prev;
+      }
+    }
+
+    function renderPack(payload) {
+      LAST_PACK = payload.data || {};
+      const d = LAST_PACK, opps = d.opportunities || [], w = d.watchlist || {};
+      $("step4").classList.remove("locked");
+
+      const watch = `<div class="watch">
+        <span class="chip"><b>${d.total_opportunities ?? opps.length}</b> opportunities</span>
+        <span class="chip">NEW <b>${(w.new||[]).length}</b></span>
+        <span class="chip">UPDATED <b>${(w.updated||[]).length}</b></span>
+        <span class="chip">EXPIRED <b>${(w.expired||[]).length}</b></span>
+        <span class="chip">grounded by <b>${d.grounded_by || "—"}</b></span>
+      </div>`;
+
+      const summary = d.executive_summary ? `<div class="banner info">${d.executive_summary}</div>` : "";
+
+      const cards = opps.map(o => {
+        const badge = (o.status === "NEW" || o.status === "UPDATED") ? `<span class="badge ${o.status}">${o.status}</span>` : "";
+        const cites = (o.citations || []).map(c => `<a href="${c}" target="_blank" rel="noopener">source</a>`).join(" · ");
+        return `<div class="opp">
+          <div class="opp-top">
+            <div class="rank">${o.rank}</div>
+            <div style="flex:1">
+              <h4><a href="${o.url}" target="_blank" rel="noopener">${o.title}</a>${badge}</h4>
+              <div class="meta">${o.buyer || "Unknown buyer"} · ${o.country || ""} · ${o.value_band || "value n/a"} · deadline ${o.deadline || "n/a"}</div>
+            </div>
+          </div>
+          <div class="fit">
+            <div class="track"><div class="fill" style="width:${Math.max(4,o.fit_score)}%;background:${scoreColor(o.fit_score)}"></div></div>
+            <div class="num" style="color:${scoreColor(o.fit_score)}">${o.fit_score}/100</div>
+          </div>
+          <div class="why">${o.rationale || ""} <span class="muted">(confidence ${o.confidence}%)</span></div>
+          <div class="ev">${o.evidence || ""}</div>
+          <div class="src">🔗 ${cites}</div>
+        </div>`;
+      }).join("");
+
+      $("packBody").innerHTML = summary + watch +
+        (cards || '<p class="muted">No opportunities in this pack.</p>') +
+        `<details><summary>Inspect raw JSON</summary><pre class="json">${escapeHtml(JSON.stringify(d, null, 2))}</pre></details>
+         <div style="margin-top:12px"><button class="btn btn-ghost" id="dlBtn">⬇ Download leadpack.json</button></div>`;
+      $("dlBtn").addEventListener("click", downloadPack);
+      $("step4").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function escapeHtml(s) { return s.replace(/[&<>]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;" }[c])); }
+
+    function downloadPack() {
+      if (!LAST_PACK) return;
+      const blob = new Blob([JSON.stringify(LAST_PACK, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = "leadpack.json"; a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    $("genBtn").addEventListener("click", genWallet);
+    $("balBtn").addEventListener("click", checkBalance);
+    $("revealBtn").addEventListener("click", () => { const p = $("pk"); p.type = p.type === "password" ? "text" : "password"; });
+    $("buyBtn").addEventListener("click", buy);
+
+    (async function init() {
+      await loadInfo();
+      await Promise.all([loadTerms(), loadBrief()]);
+    })();
+  </script>
+</body>
+</html>
