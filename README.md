@@ -1,6 +1,7 @@
 # Tender Opportunity Agent
 
 > An autonomous agent that monitors the open web for fresh **AI / data / cloud / analytics / digital-transformation** tenders, turns them into a **ranked opportunity brief grounded in real sources**, publishes a cited report to [`cited.md`](cited.md), monitors for changes over time, and **monetizes premium lead packs behind x402 agent payment rails**.
+> The agent’s output could be useful to consultancies, startups, systems integrators, and sales teams looking for public-sector or enterprise opportunities.
 
 ---
 
