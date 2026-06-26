@@ -163,14 +163,21 @@ Example output:
 [pipeline] published -> .../cited.md
 ```
 
-### 2. Serve the monetized API
+### 2. Serve the monetized API + web UI
 
 ```bash
 python scripts/serve.py                       # default port 4021
 SERVER_PORT=4022 python scripts/serve.py       # use another port if 4021 is busy
 ```
 
-Then:
+Open **http://localhost:4021/** in a browser for the built-in UI: it shows the
+live status (paywall on/off, price, network), renders the free cited brief, and
+provides a one-click **Unlock full lead pack** button that acts as a buyer
+agent. In demo (ungated) mode the pack is returned instantly; with the paywall
+on and a funded `BUYER_PRIVATE_KEY`, the same button performs the real x402
+payment. Use **Refresh opportunities** to re-run the pipeline.
+
+The raw HTTP endpoints are also available directly:
 
 ```bash
 curl http://localhost:4021/                    # service info + tool LIVE/MOCK status
@@ -210,10 +217,12 @@ The buyer handles the `402 → sign → retry` loop automatically via the x402 h
 
 | Method & path | Access | Description |
 | --- | --- | --- |
-| `GET /` | free | Service metadata + which tools are LIVE/MOCK + whether monetization is gated |
+| `GET /` | free | Web UI (status, free brief, one-click buy) |
+| `GET /api/info` | free | Service metadata + which tools are LIVE/MOCK + whether monetization is gated |
 | `GET /healthz` | free | Liveness probe |
 | `GET /cited.md` | free | The published opportunity brief (markdown) |
 | `GET /leadpack` | **paid (x402)** | Full enriched lead pack (all opportunities, evidence, rationale, watchlist) |
+| `POST /api/buy` | free endpoint | Buyer flow: returns the pack (demo) or pays the x402 paywall server-side (gated) |
 | `POST /refresh` | free | Trigger a fresh pipeline run |
 
 When `X402_RECEIVING_ADDRESS` is unset, `/leadpack` is served ungated for demos. When set, an unpaid request returns **HTTP 402** with x402 payment terms.
@@ -259,9 +268,12 @@ Ranking tie-breakers (deterministic): fit desc → deadline asc → value desc �
 │   ├── ground.py             # Stage 6: Senso ingest + grounded cited brief
 │   ├── publish.py            # Stage 7: render cited.md + build lead pack
 │   ├── monitor.py            # Stage 8: scheduled change-detection loop
+│   ├── buyer.py              # reusable x402 buyer-side payment logic
 │   └── pipeline.py           # end-to-end orchestration
 ├── server/
-│   └── app.py                # Stage 9: FastAPI + x402 (free teaser + paid lead pack)
+│   ├── app.py                # Stage 9: FastAPI + x402 (UI, free teaser, paid lead pack)
+│   └── static/
+│       └── index.html        # web UI (status, brief viewer, one-click buy)
 └── scripts/
     ├── run_once.py           # one-shot pipeline run
     ├── serve.py              # launch the API
